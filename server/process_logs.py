@@ -1,3 +1,13 @@
+#!/usr/bin/env -S uv run
+# /// script
+# requires-python = ">=3.10"
+# dependencies = [
+#     "numpy",
+#     "pandas",
+#     "pyarrow",
+# ]
+# ///
+
 # Log aggregator
 # Injests client and tourney jsons converts them to parquet files
 

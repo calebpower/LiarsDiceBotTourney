@@ -1,3 +1,14 @@
+#!/usr/bin/env -S uv run
+# /// script
+# requires-python = ">=3.10"
+# dependencies = [
+#     "numpy",
+#     "pandas",
+#     "pyarrow",
+#     "pyzmq",
+# ]
+# ///
+
 import json
 import argparse
 import numpy as np

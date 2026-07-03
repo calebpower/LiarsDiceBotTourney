@@ -1,3 +1,14 @@
+#!/usr/bin/env -S uv run
+# /// script
+# requires-python = ">=3.10"
+# dependencies = [
+#     "matplotlib",
+#     "numpy",
+#     "pandas",
+#     "pyarrow",
+# ]
+# ///
+
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
 from matplotlib import style
@@ -117,11 +128,15 @@ def plot_last_ten_tournaments(df, ax):
     return ax
 
 def animate(i):
-    tourney = pd.read_parquet('logs/tourney.parquet')
-    bot_result = pd.read_parquet(
-        'logs/bot_result.parquet', 
-        columns=['tourney_uuid','bot_uuid','bot_fullname', 'bot_name', 'bot_player', 'final_score']
-    )
+    try:
+        tourney = pd.read_parquet('logs/tourney.parquet')
+        bot_result = pd.read_parquet(
+            'logs/tourney_results.parquet', 
+            columns=['tourney_uuid','bot_uuid','bot_fullname', 'bot_name', 'bot_player', 'final_score']
+        )
+    except FileNotFoundError:
+        # Liar! No bot result to be found! (sleeping)
+        return
 
     bot_result = bot_result.merge(tourney[['tourney_uuid','tourney_index','start_time']], on='tourney_uuid', how='outer')
 

@@ -1,3 +1,13 @@
+#!/usr/bin/env -S uv run
+# /// script
+# requires-python = ">=3.10"
+# dependencies = [
+#     "matplotlib",
+#     "numpy",
+#     "pandas",
+# ]
+# ///
+
 import os
 import pandas as pd
 from pathlib import Path

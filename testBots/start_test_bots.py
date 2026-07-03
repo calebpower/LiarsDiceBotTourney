@@ -1,4 +1,9 @@
-#!/usr/bin/env python3
+#!/usr/bin/env -S uv run
+# /// script
+# requires-python = ">=3.10"
+# dependencies = []
+# ///
+
 """
 Simple Process Manager - Randomly kills and restarts programs every 30 seconds
 """
@@ -12,11 +17,11 @@ import os
 import argparse
 
 programs = [
-    "python3 client/run_client.py localhost testBots/random.py",
-    "python3 client/run_client.py localhost testBots/singleRaise.py",
-    "python3 client/run_client.py localhost testBots/call.py",
-    "python3 client/run_client.py localhost testBots/raise_5_sixes.py",
-    "python3 client/run_client.py localhost testBots/bidOnes.py",
+    "./client/run_client.py 127.0.0.1 testBots/random.py",
+    "./client/run_client.py 127.0.0.1 testBots/singleRaise.py",
+    "./client/run_client.py 127.0.0.1 testBots/call.py",
+    "./client/run_client.py 127.0.0.1 testBots/raise_5_sixes.py",
+    "./client/run_client.py 127.0.0.1 testBots/bidOnes.py",
 ]
 
 # Dictionary to track processes {program: process_object or None}
@@ -54,8 +59,8 @@ def start_process(program):
         processes[program] = subprocess.Popen(program, 
                                             shell=True, 
                                             start_new_session=True,
-                                            stdout=subprocess.PIPE, 
-                                            stderr=subprocess.PIPE,
+                                            #stdout=subprocess.PIPE, 
+                                            #stderr=subprocess.PIPE,
                                             )
     except Exception as e:
         print(f"Failed to start {program}: {e}")

@@ -1,3 +1,12 @@
+#!/usr/bin/env -S uv run
+# /// script
+# requires-python = ">=3.10"
+# dependencies = [
+#     "matplotlib",
+#     "pandas",
+#     "pyarrow",
+# ]
+# ///
 
 import os
 import pandas as pd
@@ -8,7 +17,7 @@ plt.style.use('dark_background')
 last_read_time = 0
 
 tourney = pd.read_parquet('logs/tourney.parquet')
-bot_result = pd.read_parquet('logs/bot_result.parquet')
+bot_result = pd.read_parquet('logs/tourney_results.parquet')
 
     # print(bot_result)
     # print(tourney)

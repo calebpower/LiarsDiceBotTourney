@@ -1,3 +1,11 @@
+#!/usr/bin/env -S uv run
+# /// script
+# requires-python = ">=3.10"
+# dependencies = [
+#     "pyzmq",
+# ]
+# ///
+
 import uuid
 import argparse
 import zmq
@@ -8,19 +16,18 @@ from multiprocessing import Process
 import os
 import importlib.util
 from pathlib import Path
-import socket
 
 parser = argparse.ArgumentParser()
 parser.add_argument("zmq_address", help="Address to start ZMQ on")
 parser.add_argument("bot_path", help="Python file containing bot info")
-parser.add_argument("-t", "--threads", default=25, help="How many threads to spin up to handle game engine requests (default is 25)")
-parser.add_argument("-p", "--ping_freq_mS", default=10000, help="How frequently to ping server (default is 10 seconds)")
+parser.add_argument("-t", "--threads", default=25, type=int, help="How many threads to spin up to handle game engine requests (default is 25)")
+parser.add_argument("-p", "--ping_freq_mS", default=10000, type=int, help="How frequently to ping server (default is 10 seconds)")
 args = parser.parse_args()
 
 # Import library specified as argument
-# We do it this way so players can just copy example bot without duplicating code
-module_name = args.bot_path.stem if hasattr(args.bot_path, 'stem') else 'dynamic_module'
-spec = importlib.util.spec_from_file_location(module_name, args.bot_path)
+bot_path = Path(args.bot_path)
+module_name = bot_path.stem
+spec = importlib.util.spec_from_file_location(module_name, bot_path)
 bot_module = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(bot_module)
 
@@ -48,19 +55,6 @@ def MoveHandlerProcess(moveResponse_socket_path, gameState_socket_path):
             print(f"MoveHandlerThread error: {e}")
             break
 
-def find_open_port(start_port=8000, max_port=65535):
-    for port in range(start_port, max_port + 1):
-        try:
-            with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
-                # Try to bind to the port
-                sock.bind(('localhost', port))
-                return port
-        except OSError:
-            # Port is already in use, continue to next port
-            continue
-    
-    return None  # No available port found
-
 # Generate metadata
 SESSION_GUID = str(uuid.uuid4())
 print(f"SESSION_GUID:{SESSION_GUID}")
@@ -76,20 +70,18 @@ server_socket.setsockopt_string(zmq.IDENTITY, SESSION_GUID) # Set ID
 server_url = f"tcp://{args.zmq_address}:5555"
 server_socket.connect(server_url)
 
-move_port = find_open_port()
-socket_port = find_open_port(move_port+1)
-moveResponse_socket_path = f"tcp://localhost:{move_port}"
-gameState_socket_path = f"tcp://localhost:{socket_port}" # Include GUID in socket path so we can handle multiple sessions
-print(f"Opened ports for move responses on {move_port} and game states on {socket_port}")
-
-# Backend socket for thread communication
+# Backend socket for thread communication - Bind to an atomic random port
 moveResponse_socket = context.socket(zmq.SUB)
-moveResponse_socket.bind(moveResponse_socket_path)
+move_port = moveResponse_socket.bind_to_random_port("tcp://127.0.0.1")
 moveResponse_socket.setsockopt(zmq.SUBSCRIBE, b"")
 
-# Backend socket to send 
+# Backend socket to send - Bind to an atomic random port
 gameState_socket = context.socket(zmq.PUSH)
-gameState_socket.bind(gameState_socket_path)
+socket_port = gameState_socket.bind_to_random_port("tcp://127.0.0.1")
+
+moveResponse_socket_path = f"tcp://127.0.0.1:{move_port}"
+gameState_socket_path = f"tcp://127.0.0.1:{socket_port}"
+print(f"Opened ports for move responses on {move_port} and game states on {socket_port}")
 
 # Send metadata on boot
 def register_bot():
@@ -116,7 +108,6 @@ print("Handlers started, running main loop")
 while True:
     try:
         # Poll for messages with 10 second timeout
-        # This timeout is required to make sure the server gets pinged every 10 seconds
         socks = dict(poller.poll(int(args.ping_freq_mS)))
 
         # Handle incoming client requests
