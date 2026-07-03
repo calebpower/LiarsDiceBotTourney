@@ -6,6 +6,8 @@ We want to run as many games as quickly as possible, so both the server and clie
 
 The current example client plays randomly but is functional, if very bad and occasionally tanking penalties for illegal moves. 
 
+We also support hooking into the [esoteric display manager](https://github.com/Cambridge-Hackspace/esoteric-display-mgr) if you want to pipe the tournament logs out onto physical hardware like a [traffic light display](https://github.com/Cambridge-Hackspace/traffic-light-display).
+
 ## TODO
  - Improved matchmaking, right now some bots can play more games than others
  - Big table of every decision
@@ -13,16 +15,25 @@ The current example client plays randomly but is functional, if very bad and occ
 
 ## How to run things
 
-`python3 client/run_client.py localhost testBots/random.py` will run a bot on the local network. To connect to a shared game server replace `localhost` with the host IP. To run your own bot replace `testBots/random.py` with a path to any file that defines registry data and calculateMove. 
+We use [uv](https://github.com/astral-sh/uv) to handle running scripts now, which means you don't need to manually install any dependencies. As long as you have `uv` installed, it'll automatically spin up a temporary virtual environment and grab everything it needs when you launch a script.
 
-`python3 client/readable_game_log.py -a localhost:5556` will print game logs as they are received. You can filter by bot or player, or only print summaries. Most of these scripts use argparse so you see what arguments are supported with `--help`. 
+`./client/run_client.py localhost testBots/random.py` will run a bot on the local network. To connect to a shared game server replace `localhost` with the host IP. To run your own bot replace `testBots/random.py` with a path to any file that defines registry data and calculateMove. 
 
-`python3 server/run_server.py localhost server/server_config.json` will run the default server locally. This opens a port 5555 for bots to connect to and broadcasts logs on port 5556. `python3 testBots/start_test_bots.py` kicks off four (intentionally bad) test bots to run a tournament. 
+`./client/readable_game_log.py -a localhost:5556` will print game logs as they are received. You can filter by bot or player, or only print summaries. Most of these scripts use argparse so you see what arguments are supported with `--help`. 
 
+`./server/run_server.py localhost server/server_config.json` will run the default server locally. This opens a port 5555 for bots to connect to and broadcasts logs on port 5556. `./testBots/start_test_bots.py` kicks off four (intentionally bad) test bots to run a tournament. 
 
-`python3 data/simple_real_time_plotter` plots scores from the last 10 tournies in real time. You need to have the logs pulled locally for this to work. `pyhon3 data/plot_history.py` does the same as a one shot. Either is a good jumping off point for your own data proc. 
+`./data/simple_real_time_plotter.py` plots scores from the last 10 tournies in real time. You need to have the logs pulled locally for this to work. `./data/plot_history.py` does the same as a one shot. Either is a good jumping off point for your own data proc. 
 
-`python3 server/process_logs.py` will ingest jsons in parquets if you are downloading all of the json files locally and running your own data processing. 
+`./server/process_logs.py` will ingest jsons in parquets if you are downloading all of the json files locally and running your own data processing. 
+
+`./data/run_esoteric_scoreboard.py <api_host> <zmq_address>` runs the live scoreboard on the traffic light display. It automatically calculates the timing between data blasts from the server, updates the standings (rounded to the nearest tenth), scrolls the marquee using a custom pixel font, and plays an animation of dice being poured out during the intermission gap. Make sure your `API_KEY` is exported to your terminal session before running it.
+
+Supported arguments:
+ - `-k`, `--insecure`: Bypasses SSL certificate verification step if your internal server is using self-signed certs.
+ - `--udp-host`: Useful if the API is hidden behind a proxy firewall that eats raw UDP frames; lets you route frames directly to the display backend IP.
+ - `--display-ids`: Comma-separated display IDs (defaults to 1,2,3).
+ - `--fps`: Locks the rendering loop rate (defaults to 30).
 
 ## Schemas
 
